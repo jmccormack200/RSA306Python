@@ -41,7 +41,6 @@ class SpectrumAnalyzer:
 		self.rsa300.SetIQBandwidth(self.iqBW)
 
 
-
 	def getIQData(self):
 		aLen = 1280
 		length = c_int(aLen)
@@ -99,6 +98,8 @@ class SpectrumAnalyzer:
 		q = iq[1]
 		r = iq[3]
 
+		'''
+
 		for a in range(10):
 			print str(f[a]) + " = " + str(r[a])
 		print " "
@@ -106,16 +107,78 @@ class SpectrumAnalyzer:
 		for a in range(-1,-10,-1):
 			print str(f[a]) + " = " + str(r[a])
 		print " "		
+		'''
+	def updateFFT(self):
+		aLen = 1280
+		x = np.linspace(0, aLen, aLen)
+		iq = self.getIQData()
+
+		f = iq[4]
+		i = iq[0]
+		q = iq[1]
+		r = iq[3]
+
+		rDiff = np.diff(r, n=2)
+
+		for a in range(-1,-30,-1):
+			print str(f[a]) + " = " + str(r[a])
+		print " "
+
+		for a in range(-1,-30,-1):
+			print str(f[a]) + " = " + str(rDiff[a])
+		print " "		
+
+
+
+
 
 	def switchFreq(self):
-		self.setParameters(cf=1800e6, rl=-40, trigPos=25.0, iqBW=250e6)
-		self.update()
+		self.setParameters(cf=1844e6, rl=-40, trigPos=25.0, iqBW=10e6)
+		#self.update()
+		self.updateFFT()
+		#self.setParameters(cf=800e6, rl=-40, trigPos=25.0, iqBW=10e6)
+		#self.update()
+		#self.updateFFT()
 
-		self.setParameters(cf=800e6, rl=-40, trigPos=25.0, iqBW=150e6)
-		self.update()
+	def cellBand(self,cf=1900e6):
+		self.setParameters(cf=cf)
+		iqData = self.getIQData()
+
+		f = iq[4]
+		i = iq[0]
+		q = iq[1]
+		r = iq[3]
+
+		rDiff = np.diff(r, n=2)
+
+		#store in Band values:
+		fBand = []
+		rDBand = []
+
+		#store out of Band Values:
+		fOut = []
+		rDout = []
+
+		#soret values to in Band and out of Band
+		for a in len(f):
+		#values in Band
+			if (f[a] < cf*1.1 and f[a] > cf*.9):
+				fBand.append(f[a])
+				rDBand.append(r[a])
+			else:
+				fOut.append(f[a])
+				rDOut.append(r[a])
+
+		print len(fBand)
+		print len(fOut)
+
+		#valus not in Band
+
 
 if __name__ == "__main__":
 	rsa300 = SpectrumAnalyzer()
 	
-	while(True):
-		rsa300.switchFreq()
+	#while(True):
+	#	rsa300.switchFreq()
+
+	rsa300.switchFreq()
