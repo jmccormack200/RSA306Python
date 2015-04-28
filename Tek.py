@@ -140,37 +140,22 @@ class SpectrumAnalyzer:
 		#self.update()
 		#self.updateFFT()
 
-	def cellBand(self,cf=1900e6):
+	def cellBand(self,cf=1890e6):
 		self.setParameters(cf=cf)
-		iqData = self.getIQData()
+		iqDataInBand = self.getIQData()
 
-		f = iq[4]
-		i = iq[0]
-		q = iq[1]
-		r = iq[3]
+		finBand = iqDataInBand[4]
+		rinBand = iqDataInBand[3]
+		rDinBand = np.diff(rinBand, n=2)
 
-		rDiff = np.diff(r, n=2)
+		rinBandMax = np.amax(rDinBand)
+		finBandMax = finBand[np.argmax(rDinBand)]
 
-		#store in Band values:
-		fBand = []
-		rDBand = []
+		print rinBandMax
+		print np.amax(rDinBand)
+		print finBandMax
 
-		#store out of Band Values:
-		fOut = []
-		rDout = []
 
-		#soret values to in Band and out of Band
-		for a in len(f):
-		#values in Band
-			if (f[a] < cf*1.1 and f[a] > cf*.9):
-				fBand.append(f[a])
-				rDBand.append(r[a])
-			else:
-				fOut.append(f[a])
-				rDOut.append(r[a])
-
-		print len(fBand)
-		print len(fOut)
 
 		#valus not in Band
 
@@ -181,4 +166,4 @@ if __name__ == "__main__":
 	#while(True):
 	#	rsa300.switchFreq()
 
-	rsa300.switchFreq()
+	rsa300.cellBand()
