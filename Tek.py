@@ -98,7 +98,8 @@ class SpectrumAnalyzer:
 		return [iData, qData, z, r, f]
 
 
-	def cellBand(self,cf=1871e6):
+	def cellBand(self,line,cf=1871e6):
+		line = self.init()
 		self.setParameters(cf=cf)
 		iqDataInBand = self.getIQData()
 
@@ -121,21 +122,41 @@ class SpectrumAnalyzer:
 		cf = c_double(0)
 		print self.rsa300.GetCenterFreq(byref(cf))
 
-		plot(finBand,rinBand)
-		show()
+		#below is for printing
+		
+		return line.set_data(finBand, rinBand)
+		
+		#plot(finBand,rinBand)
+		#show()
 		
 	def Stop(self):
 		print "Goodbye!"
 		self.rsa300.Stop()
 		self.rsa300.Disconnect()
-
-
-
+		
+	def animateSetup(self):
+		self.fig = plt.figure()
+		self.ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
+		self.line, = self.ax.plot([], [], lw=2)
+		
+	def animateInit(self):
+		self.line.set_data([], [])
+		return self.line,
+		
+	def animateUpdate(self):
+		return cellBand(self.animateInit())
+		
+	def animation(self):
+		anim = animation.FuncAnimation(self.fig, self.animate, init_func=self.animateInit(), frame=200, interval=20, blit=True)
+		plt.show()
+		
 if __name__ == "__main__":
+	
 	rsa300 = SpectrumAnalyzer()
 	aLen = 1280
 
 	rsa300.cellBand()
+	rsa300.animation()
 	
 	rsa300.Stop()
 
