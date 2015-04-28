@@ -148,11 +148,16 @@ class SpectrumAnalyzer:
 		rinBand = iqDataInBand[3]
 		rDinBand = np.diff(rinBand, n=2)
 
-		rinBandMax = np.amax(rDinBand)
-		finBandMax = finBand[np.argmax(rDinBand)]
+		#rDinBandMax = np.amax(rDinBand)
+		#rinBandMax = rinBand[np.argmax(rDinBand)]
+		#finBandMax = finBand[np.argmax(rDinBand)]
+
+		rDinBandMax = 0
+		rinBandMax = np.amax(rinBand)
+		finBandMax = finBand[np.argmax(rinBand)]
 
 		print rinBandMax
-		print np.amax(rDinBand)
+		print rDinBandMax
 		print finBandMax
 
 
