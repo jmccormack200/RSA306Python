@@ -18,8 +18,6 @@ class SpectrumAnalyzer:
 
 		ret = self.rsa300.Search(searchIDs, byref(deviceserial), byref(numFound))
 		self.connect(ret, searchIDs)
-		self.setParameters()
-		self.update()
 
 	def connect(self, ret, searchIDs):
 		if ret !=0:
@@ -28,14 +26,16 @@ class SpectrumAnalyzer:
 			self.rsa300.Connect(searchIDs[0])
 
 	def setParameters(self, cf=1800e6, rl=-40, trigPos=25.0, iqBW=100e6):
+
 		self.cf = c_double(cf)
-		self.rsa300.SetCenterFreq(self.cf)
+		self.rsa300.SetCenterFreq(self.cf)		
 
 		self.rl = c_double(rl)
 		self.rsa300.SetReferenceLevel(rl)
 
 		self.trigPos = c_double(trigPos)
 		self.rsa300.SetTriggerPositionPercent(self.trigPos)
+		#self.rsa300.SetTriggerMode(mode=1)
 
 		self.iqBW = c_double(iqBW)
 		self.rsa300.SetIQBandwidth(self.iqBW)
@@ -98,6 +98,15 @@ class SpectrumAnalyzer:
 		q = iq[1]
 		r = iq[3]
 
+		#print iq[4][1][0:10]
+		line.set_data(x, i)
+		line2.set_data(x, q)
+		ax2.set_xlim(f[0], f[len(f) - 1])
+		line3.set_data(f, r)
+		
+		ax2.set_xticks( [ round(f[int(8.0/56*len(f))]), round(f[int(18.0/56*len(f))]), f[len(f)/2], round(f[int(38.0/56*len(f))]), round(f[int(48.0/56*len(f))]) ] )
+		#ax2.relim()
+		return line, line2, line3,
 		'''
 
 		for a in range(10):
@@ -133,14 +142,14 @@ class SpectrumAnalyzer:
 
 
 	def switchFreq(self):
-		self.setParameters(cf=1844e6, rl=-40, trigPos=25.0, iqBW=10e6)
+		self.setParameters(cf=1844e6, rl=-40, trigPos=25.0, iqBW=56e6)
 		#self.update()
 		self.updateFFT()
 		#self.setParameters(cf=800e6, rl=-40, trigPos=25.0, iqBW=10e6)
 		#self.update()
 		#self.updateFFT()
 
-	def cellBand(self,cf=1890e6):
+	def cellBand(self,cf=700e6):
 		self.setParameters(cf=cf)
 		iqDataInBand = self.getIQData()
 
@@ -148,19 +157,31 @@ class SpectrumAnalyzer:
 		rinBand = iqDataInBand[3]
 		rDinBand = np.diff(rinBand, n=2)
 
-		#rDinBandMax = np.amax(rDinBand)
-		#rinBandMax = rinBand[np.argmax(rDinBand)]
-		#finBandMax = finBand[np.argmax(rDinBand)]
+		rinBand = np.log(abs(rinBand))
 
+		rDinBandMax = np.amax(rDinBand)
+		rinBandMax = rinBand[np.argmax(rDinBand)]
+		finBandMax = finBand[np.argmax(rDinBand)]
+		print np.amax(finBand)
+
+		'''
 		rDinBandMax = 0
 		rinBandMax = np.amax(rinBand)
 		finBandMax = finBand[np.argmax(rinBand)]
-
-		print rinBandMax
-		print rDinBandMax
-		print finBandMax
+		'''
 
 
+
+		print "Max Value = " + str(rinBandMax)
+		print "Max derivative Value = " + str(rDinBandMax)
+		print "Corresponding Frequency = " + str(finBandMax)
+		print "Frequency range is " + str(finBand[0]) + " to " + str(finBand[1279])
+
+		cf = c_double(0)
+		print self.rsa300.GetCenterFreq(byref(cf))
+
+		plot(finBand,rinBand)
+		show()
 
 		#valus not in Band
 
@@ -172,3 +193,24 @@ if __name__ == "__main__":
 	#	rsa300.switchFreq()
 
 	rsa300.cellBand()
+
+
+	fig = figure()
+
+	ax2 = fig.add_subplot(211)
+	ax2.set_xlim(0, aLen)
+	ax2.set_ylim(0, 1e2)
+	ax2.set_yscale('symlog')
+
+	xlabel('RefLevel = ' + str(rl.value) + ' dBm')
+	title('IQBandwith = ' + str(iqBW.value / 1e6) + ' MHz')
+	ax = fig.add_subplot(212)
+	ax.set_xlim(0, aLen)
+	ax.set_ylim(-15e-3, 15e-3)
+
+	xlabel('CF = ' + str(cf.value / 1e6) + ' MHz')
+	line, = ax.plot([], [], lw=2)
+	line2, = ax.plot([], [], lw=2)
+	line3, = ax2.plot([], [], lw=2)
+	ani = animation.FuncAnimation(fig, update, init_func=init, frames=200, interval=10, blit=True)
+	show()
