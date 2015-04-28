@@ -98,7 +98,7 @@ class SpectrumAnalyzer:
 		return [iData, qData, z, r, f]
 
 
-	def cellBand(self,cf=1900e6):
+	def cellBand(self,cf=1871e6):
 		self.setParameters(cf=cf)
 		iqDataInBand = self.getIQData()
 
@@ -123,6 +123,11 @@ class SpectrumAnalyzer:
 
 		plot(finBand,rinBand)
 		show()
+		
+	def Stop(self):
+		print "Goodbye!"
+		self.rsa300.Stop()
+		self.rsa300.Disconnect()
 
 
 
@@ -131,4 +136,6 @@ if __name__ == "__main__":
 	aLen = 1280
 
 	rsa300.cellBand()
+	
+	rsa300.Stop()
 

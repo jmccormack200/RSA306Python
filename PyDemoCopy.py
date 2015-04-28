@@ -124,73 +124,7 @@ ax.set_ylim(-15e-3, 15e-3)
 xlabel('CF = ' + str(cf.value / 1e6) + ' MHz')
 line, = ax.plot([], [], lw=2)
 line2, = ax.plot([], [], lw=2)
-line3, = ax2.plot([], [], lw=2)
-
-
-
-def next(event):
-	rsa300.Stop()
-	cf = c_double(0)
-	rsa300.GetCenterFreq(byref(cf))
-	cf = c_double(cf.value + 10e6)
-	rsa300.SetCenterFreq(cf)
-	rsa300.Run()
-	ax.set_xlabel('CF = ' + str(cf.value / 1e6) + ' MHz')
-	
-def prev(event):
-	rsa300.Stop()
-	cf = c_double(0)
-	rsa300.GetCenterFreq(byref(cf))
-	cf = c_double(cf.value - 10e6)
-	rsa300.SetCenterFreq(cf)
-	rsa300.Run()
-	ax.set_xlabel('CF = ' + str(cf.value / 1e6) + ' MHz')
-	
-def up(event):
-	rsa300.Stop()
-	rl = c_double(0)
-	rsa300.GetReferenceLevel(byref(rl))
-	rl = c_double(rl.value + 5.0)
-	rsa300.SetReferenceLevel(rl)
-	rsa300.Run()
-	ax2.set_xlabel('RefLevel = ' + str(rl.value) + ' dBm')
-	
-def down(event):
-	rsa300.Stop()
-	rl = c_double(0)
-	rsa300.GetReferenceLevel(byref(rl))
-	rl = c_double(rl.value - 5.0)
-	rsa300.SetReferenceLevel(rl)
-	rsa300.Run()
-	ax2.set_xlabel('RefLevel = ' + str(rl.value) + ' dBm')
-
-def trigger(event):
-	rsa300.Stop()
-	trigMode = c_int(True)
-	rsa300.GetTriggerMode(byref(trigMode))
-	trigMode = c_int(not trigMode.value)
-	rsa300.SetTriggerMode(trigMode)
-	rsa300.Run()
-	
-def more(event):
-	rsa300.Stop()
-	iqBQ = c_double(0)
-	rsa300.GetIQBandwidth(byref(iqBQ))
-	iqBQ = c_double(iqBQ.value * 2)
-	rsa300.SetIQBandwidth(iqBQ)
-	rsa300.Run()
-	ax2.set_title('IQBandwith = ' + str(iqBQ.value / 1e6) + ' MHz')
-
-def less(event):
-	rsa300.Stop()
-	iqBQ = c_double(0)
-	rsa300.GetIQBandwidth(byref(iqBQ))
-	iqBQ = c_double(iqBQ.value / 2)
-	rsa300.SetIQBandwidth(iqBQ)
-	rsa300.Run()
-	ax2.set_title('IQBandwith = ' + str(iqBQ.value / 1e6) + ' MHz')
-	
-	
+line3, = ax2.plot([], [], lw=2)	
 
 ani = animation.FuncAnimation(fig, update, init_func=init, frames=200, interval=10, blit=True)
 show()
