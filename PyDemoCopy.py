@@ -191,33 +191,6 @@ def less(event):
 	ax2.set_title('IQBandwith = ' + str(iqBQ.value / 1e6) + ' MHz')
 	
 	
-axbuttonNext = plt.axes([0.91, 0.02, 0.070, 0.05])
-bnext = Button(axbuttonNext, 'Next')
-bnext.on_clicked(next)
-
-axbuttonPrev = plt.axes([0.02, 0.02, 0.070, 0.05])
-bprev = Button(axbuttonPrev, 'Prev')
-bprev.on_clicked(prev)
-
-axbuttonUp = plt.axes([0.02, 0.92, 0.12, 0.05])
-bup = Button(axbuttonUp, 'Ref Up')
-bup.on_clicked(up)
-
-axbuttonDown = plt.axes([0.145, 0.92, 0.12, 0.05])
-bdown = Button(axbuttonDown, 'Ref Down')
-bdown.on_clicked(down)
-
-axbuttonTrigger = plt.axes([0.85, 0.92, 0.12, 0.05])
-btrigger = Button(axbuttonTrigger, 'Trigger')
-btrigger.on_clicked(trigger)
-
-axbuttonMore = plt.axes([0.81, 0.02, 0.070, 0.05])
-bmore = Button(axbuttonMore, 'More')
-bmore.on_clicked(more)
-
-axbuttonLess = plt.axes([0.12, 0.02, 0.070, 0.05])
-bless = Button(axbuttonLess, 'Less')
-bless.on_clicked(less)
 
 ani = animation.FuncAnimation(fig, update, init_func=init, frames=200, interval=10, blit=True)
 show()
