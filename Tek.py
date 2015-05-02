@@ -23,6 +23,14 @@ class SpectrumAnalyzer:
 			print "Run error: " + str(ret)
 		else:
 			self.rsa300.Connect(searchIDs[0])
+		# we need to store:
+		# max value
+		# the "delta" change of the values
+		# the number of peaks
+		# and how long there has been a peak
+		
+		#self.data = [max_value,change_in_max,number_of_peaks,sum_of_peaks,time]
+		self.data = [0,0,0,0,0]
 
 	def setParameters(self, cf=80e6, rl=-10, trigPos=25.0, iqBW=40e6):
 		self.rsa300.Stop()
@@ -107,12 +115,9 @@ class SpectrumAnalyzer:
 		rinBand = iqDataInBand[3]
 		rDinBand = np.diff(rinBand, n=2)
 
-		rinBand = np.log(abs(rinBand))
-
 		rDinBandMax = np.amax(rDinBand)
-		rinBandMax = rinBand[np.argmax(rDinBand)]
-		finBandMax = finBand[np.argmax(rDinBand)]
-		print np.amax(finBand)
+		rinBandMax = rinBand[np.argmax(rinBand)]
+		finBandMax = finBand[np.argmax(rinBand)]
 
 		print "Max Value = " + str(rinBandMax)
 		print "Max derivative Value = " + str(rDinBandMax)
@@ -123,32 +128,50 @@ class SpectrumAnalyzer:
 		print self.rsa300.GetCenterFreq(byref(cf))
 
 		#below is for printing
-		return (finBand, rinBand)
-		
+				
+		#plot(finBand,rinBand)
+		#show()
+
+		print self.population(finBand, rinBand)
 		plot(finBand,rinBand)
 		show()
+	
 		
 	def Stop(self):
 		print "Goodbye!"
 		self.rsa300.Stop()
 		self.rsa300.Disconnect()
+
+	def population(self,frequency,amplitude):
+		#self.data = [max_value,change,number_of_peaks,sum_of_peaks,time]
+		data = self.data
+		max_value = data[0]
+		change = data[1]
+		number_of_peaks = data[2]
+		sum_of_peaks = data[3]
+		time = data[4]
+
+		peaks = amplitude[amplitude > 0.1]
+		if not peaks:
+			change_in_max = 0 - max_value
+			max_value = 0
+
+			if time > 0:
+				time -= 1
+			else:
+				time = 0
+
+		else:
+			change_in_max = np.amax(peaks) - max_value
+			max_value = np.amax(peaks)
+			number_of_peaks = np.count_nonzero(peaks)
+			sum_of_peaks = np.sum(peaks)
+
+		self.data = []
+
+
 		
-	def animateSetup(self):
-		self.fig = plt.figure()
-		self.ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
-		self.line, = self.ax.plot([], [], lw=2)
-		
-	def animateInit(self):
-		self.line.set_data([], [])
-		return self.line,
-		
-	def animateUpdate(self,i):
-		return self.line.set_data(self.cellBand(self.animateInit()))
-		
-	def animation(self):
-		self.animateSetup()
-		anim = animation.FuncAnimation(self.fig, self.animateUpdate, init_func=self.animateInit(), frames=200, interval=20, blit=True)
-		plt.show()
+
 		
 if __name__ == "__main__":
 	
