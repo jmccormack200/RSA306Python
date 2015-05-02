@@ -17,7 +17,11 @@ class SpectrumAnalyzer:
 		deviceserial = c_wchar_p()
 		numFound = c_int()
 
+		self.data = [0,0,0,0,0]
+		self.populationValue = 5
+
 		ret = self.rsa300.Search(searchIDs, byref(deviceserial), byref(numFound))
+
 
 		if ret !=0:
 			print "Run error: " + str(ret)
@@ -30,7 +34,7 @@ class SpectrumAnalyzer:
 		# and how long there has been a peak
 		
 		#self.data = [max_value,change_in_max,number_of_peaks,sum_of_peaks,time]
-		self.data = [0,0,0,0,0]
+
 
 	def setParameters(self, cf=80e6, rl=-10, trigPos=25.0, iqBW=40e6):
 		self.rsa300.Stop()
@@ -42,21 +46,19 @@ class SpectrumAnalyzer:
 
 		self.rsa300.SetIQRecordLength(length)
 		
-		self.cf = c_double(cf)
-		self.rsa300.SetCenterFreq(self.cf)		
+		cf = c_double(cf)
+		self.rsa300.SetCenterFreq(cf)		
 
-		self.rl = c_double(rl)
+		rl = c_double(rl)
 		self.rsa300.SetReferenceLevel(rl)
-		cf = c_double(0)
-		self.rsa300.GetReferenceLevel(byref(cf))
-
+		
 		self.trigPos = c_double(trigPos)
 		self.rsa300.SetTriggerPositionPercent(self.trigPos)
 
 		self.iqBW = c_double(iqBW)
 		self.rsa300.SetIQBandwidth(self.iqBW)
 
-		print cf
+
 
 
 	def getIQData(self):
@@ -94,10 +96,10 @@ class SpectrumAnalyzer:
 		z = [(x + 1j*y) for x,y in zip(iData, qData)]
 
 		cf = c_double(0)
-		self.rsa300.GetCenterFreq(byref(self.cf))
+		self.rsa300.GetCenterFreq(byref(cf))
 		
 		spec2 = mlab.specgram(z, NFFT=aLen, Fs=56e6)
-		f = [(x + self.cf)/1e6 for x in spec2[1]]
+		f = [(x + cf)/1e6 for x in spec2[1]]
 
 		spec = np.fft.fft(z, aLen)
 		r = [x * 1 for x in abs(spec)]
@@ -108,7 +110,7 @@ class SpectrumAnalyzer:
 
 	def cellBand(self, cf=1871e6):
 	
-		self.setParameters(cf=cf)
+		self.setParameters(cf=cf, rl=-10)
 		iqDataInBand = self.getIQData()
 
 		finBand = iqDataInBand[4]
@@ -119,20 +121,19 @@ class SpectrumAnalyzer:
 		rinBandMax = rinBand[np.argmax(rinBand)]
 		finBandMax = finBand[np.argmax(rinBand)]
 
+		'''
 		print "Max Value = " + str(rinBandMax)
 		print "Max derivative Value = " + str(rDinBandMax)
 		print "Corresponding Frequency = " + str(finBandMax)
 		print "Frequency range is " + str(finBand[0]) + " to " + str(finBand[1279])
-
-		cf = c_double(0)
-		print self.rsa300.GetCenterFreq(byref(cf))
+		'''
 
 		#below is for printing
 				
 		#plot(finBand,rinBand)
 		#show()
 
-		print self.population(finBand, rinBand)
+		self.population(finBand, rinBand)
 		plot(finBand,rinBand)
 		show()
 	
@@ -144,31 +145,74 @@ class SpectrumAnalyzer:
 
 	def population(self,frequency,amplitude):
 		#self.data = [max_value,change,number_of_peaks,sum_of_peaks,time]
-		data = self.data
-		max_value = data[0]
-		change = data[1]
-		number_of_peaks = data[2]
-		sum_of_peaks = data[3]
-		time = data[4]
+		old_data = self.data
+		old_time = old_data[-1]
 
-		peaks = amplitude[amplitude > 0.1]
-		if not peaks:
-			change_in_max = 0 - max_value
+		peaks = amplitude[amplitude > 0.2]
+
+		if len(peaks) == 0:
 			max_value = 0
-
-			if time > 0:
-				time -= 1
-			else:
-				time = 0
+			change = 0
+			number_of_peaks = 0
+			sum_of_peaks = 0
+			time = old_time - 1 
 
 		else:
-			change_in_max = np.amax(peaks) - max_value
+			change = 0 # fix in next function
 			max_value = np.amax(peaks)
 			number_of_peaks = np.count_nonzero(peaks)
 			sum_of_peaks = np.sum(peaks)
+			time = old_time + 1
 
-		self.data = []
+		print max_value
+		print change
+		print number_of_peaks
+		print sum_of_peaks
+		print time
+		new_data = [max_value, change, number_of_peaks, sum_of_peaks, time]
+		population_value = self.findPopulationValue(old_data, new_data)
 
+	def findPopulationValue(self, old_data, new_data):
+		#we need to figure out what went up, and what went down
+		# and adjust the popluation value accordingly
+
+		#if we have no new cell data, lower score over time
+		if (new_data[0] == 0):
+			if (new_data[-1] <= -30):
+				self.populationValue -= 1
+				print self.populationValue
+				new_data[-1] = 0
+
+		#don't go below 0
+		if self.populationValue <= 0:
+			self.populationValue = 1
+
+		#if we have cell data calculate population score
+
+		#first calculate if average is increasing or decreasing
+		if old_data[2] == 0:
+			old_divisor = 1
+		else:
+			old_divisor = old_data[2]
+
+		if new_data[2] == 0:
+			new_divisor = 1
+		else:
+			new_divisor = new_data[2]
+
+		previousAverage = float(old_data[3])/float(old_divisor)
+		newAverage = float(new_data[3])/float(new_divisor)
+		deltaAverage = newAverage - previousAverage
+
+		#then see if new max or old max is bigger
+		deltaMax = new_data[0] - old_data[0]
+
+		
+
+
+		#store data and print value
+		self.data = new_data
+		print self.populationValue
 
 		
 
@@ -178,7 +222,8 @@ if __name__ == "__main__":
 	rsa300 = SpectrumAnalyzer()
 	aLen = 1280
 
-	rsa300.cellBand()
+	for a in range(3):
+		rsa300.cellBand()
 	#rsa300.animation()
 	
 	rsa300.Stop()
