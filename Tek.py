@@ -6,6 +6,7 @@ import matplotlib.animation as animation
 import time
 from matplotlib.widgets import Button
 import matplotlib.pyplot as plt
+import math
 
 class SpectrumAnalyzer:
 
@@ -147,8 +148,9 @@ class SpectrumAnalyzer:
 		#self.data = [max_value,change,number_of_peaks,sum_of_peaks,time]
 		old_data = self.data
 		old_time = old_data[-1]
+		minimum_for_peak = 0.04
 
-		peaks = amplitude[amplitude > 0.2]
+		peaks = amplitude[amplitude > minimum_for_peak]
 
 		if len(peaks) == 0:
 			max_value = 0
@@ -163,16 +165,23 @@ class SpectrumAnalyzer:
 			number_of_peaks = np.count_nonzero(peaks)
 			sum_of_peaks = np.sum(peaks)
 			time = old_time + 1
-
-		print max_value
-		print change
-		print number_of_peaks
-		print sum_of_peaks
-		print time
+		
+		print "Max Value = " + str(max_value)
+		print "change = " + str(change)
+		print "number of peaks = " + str(number_of_peaks)
+		print "sum of peaks = " + str(sum_of_peaks)
+		print "time = " + str(time)
+		
 		new_data = [max_value, change, number_of_peaks, sum_of_peaks, time]
 		population_value = self.findPopulationValue(old_data, new_data)
 
 	def findPopulationValue(self, old_data, new_data):
+		#Adjust these values to adjust the maximum score
+		fullMax = 0.4
+		fullAvg = 0.25
+		fullNumPeaks = 25
+
+
 		#we need to figure out what went up, and what went down
 		# and adjust the popluation value accordingly
 
@@ -207,14 +216,15 @@ class SpectrumAnalyzer:
 		#then see if new max or old max is bigger
 		deltaMax = new_data[0] - old_data[0]
 
-		
+		#create weight of the values
+		weighted = (((float(new_data[0]/fullMax) * 0.2) + (float(newAverage/fullAvg)*.4) +
+				(float(new_divisor/fullNumPeaks) * 0.4)) * 100)
+		weighted = round(weighted,2)
 
-
+		print "weighted = " + str(weighted)
 		#store data and print value
 		self.data = new_data
 		print self.populationValue
-
-		
 
 		
 if __name__ == "__main__":
