@@ -133,10 +133,15 @@ class SpectrumAnalyzer:
 				
 		#plot(finBand,rinBand)
 		#show()
+		average = 0
 
-		self.population(finBand, rinBand)
-		plot(finBand,rinBand)
-		show()
+		average += self.population(finBand, rinBand)
+
+		#print "Population = " + str(average)
+
+		
+		#plot(finBand,rinBand)
+		#show()
 	
 		
 	def Stop(self):
@@ -148,8 +153,8 @@ class SpectrumAnalyzer:
 		#self.data = [max_value,change,number_of_peaks,sum_of_peaks,time]
 		old_data = self.data
 		old_time = old_data[-1]
-		minimum_for_peak = 0.04
-
+		minimum_for_peak = 0.037
+		population_score = old_data[4]
 		peaks = amplitude[amplitude > minimum_for_peak]
 
 		if len(peaks) == 0:
@@ -157,40 +162,44 @@ class SpectrumAnalyzer:
 			change = 0
 			number_of_peaks = 0
 			sum_of_peaks = 0
-			time = old_time - 1 
 
 		else:
 			change = 0 # fix in next function
 			max_value = np.amax(peaks)
 			number_of_peaks = np.count_nonzero(peaks)
 			sum_of_peaks = np.sum(peaks)
-			time = old_time + 1
 		
+		time = old_time + 1
+
+		'''
 		print "Max Value = " + str(max_value)
 		print "change = " + str(change)
 		print "number of peaks = " + str(number_of_peaks)
 		print "sum of peaks = " + str(sum_of_peaks)
 		print "time = " + str(time)
+		'''
 		
-		new_data = [max_value, change, number_of_peaks, sum_of_peaks, time]
+		new_data = [max_value, change, number_of_peaks, sum_of_peaks, population_score, time]
 		population_value = self.findPopulationValue(old_data, new_data)
+		return population_value
 
 	def findPopulationValue(self, old_data, new_data):
 		#Adjust these values to adjust the maximum score
 		fullMax = 0.4
-		fullAvg = 0.25
-		fullNumPeaks = 25
+		fullAvg = 0.18
+		fullNumPeaks = 20
 
 
 		#we need to figure out what went up, and what went down
 		# and adjust the popluation value accordingly
 
 		#if we have no new cell data, lower score over time
-		if (new_data[0] == 0):
-			if (new_data[-1] <= -30):
-				self.populationValue -= 1
-				print self.populationValue
-				new_data[-1] = 0
+
+		if (new_data[-1] >= 30):
+			#self.populationValue
+			print "Final Population = " + str(new_data[4]/new_data[-1])
+			new_data[4] = 0
+			new_data[-1] = 0
 
 		#don't go below 0
 		if self.populationValue <= 0:
@@ -217,14 +226,16 @@ class SpectrumAnalyzer:
 		deltaMax = new_data[0] - old_data[0]
 
 		#create weight of the values
-		weighted = (((float(new_data[0]/fullMax) * 0.2) + (float(newAverage/fullAvg)*.4) +
-				(float(new_divisor/fullNumPeaks) * 0.4)) * 100)
+		weighted = (((float(new_data[0]/fullMax)) * 0.4) + (float(newAverage/fullAvg)*.2) +
+				(float(new_divisor/fullNumPeaks) * 0.4)) * 100
 		weighted = round(weighted,2)
 
-		print "weighted = " + str(weighted)
+		#print "weighted = " + str(weighted)
 		#store data and print value
+		#print weighted
+		new_data[4] += weighted
 		self.data = new_data
-		print self.populationValue
+		return weighted
 
 		
 if __name__ == "__main__":
@@ -232,7 +243,7 @@ if __name__ == "__main__":
 	rsa300 = SpectrumAnalyzer()
 	aLen = 1280
 
-	for a in range(3):
+	for a in range(6000):
 		rsa300.cellBand()
 	#rsa300.animation()
 	
