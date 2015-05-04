@@ -196,8 +196,12 @@ class SpectrumAnalyzer:
 		#if we have no new cell data, lower score over time
 
 		if (new_data[-1] >= 30):
+			oldPopulation = self.populationValue
 			#self.populationValue
-			print "Final Population = " + str(new_data[4]/new_data[-1])
+			print ""
+			print "Weight Value = " + str(new_data[4]/new_data[-1])
+			print "Population Value = " + str(round(self.populationValue))
+
 			new_data[4] = 0
 			new_data[-1] = 0
 
@@ -234,7 +238,7 @@ class SpectrumAnalyzer:
 		#store data and print value
 		#print weighted
 		new_data[4] += weighted
-		self.data = new_data
+
 		return weighted
 
 		
